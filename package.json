@@ -1,0 +1,21 @@
+{
+  "name": "texture-packer",
+  "version": "1.0.0",
+  "description": "A lightweight texture-packer.",
+  "main": "TexturePacker.js",
+  "directories": {
+    "example": "example"
+  },
+  "dependencies": {
+    "bin-pack": "^1.0.1"
+  },
+  "devDependencies": {
+    "resource-loader": "^1.6.2",
+    "beefy": "^2.1.5"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jamie Owen <hello@jamieowen.com> (=)",
+  "license": "ISC"
+}
