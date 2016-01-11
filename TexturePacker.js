@@ -10,7 +10,7 @@ var TexturePacker = function( opts ){
 
 	this._opts = opts || defaultOpts;
 
-	this.texture  = null;
+	this.canvas  = document.createElement( 'canvas' );
 	this._sources = [];
 	this.needsPack = true;
 };
@@ -23,13 +23,15 @@ TexturePacker.prototype = {
 
 	/**
 	 * Add an item to be packed. This can be an Image element or Canvas element.
-	 * @param src
+	 * @param source The source element
+	 * @param data A custom data object that is related to the source ( usually a texture object ) - will be passed when packing to return uvs.
 	 * @param opts Can be an object specifying width and height to scale the source to when drawing to the texture.
 	 */
-	add: function( src, opts ){
+	add: function( source, data, opts ){
 
 		var entry = {
-			src: src,
+			source: source,
+			data: data,
 			width: null,
 			height: null,
 			packed: {
@@ -48,20 +50,20 @@ TexturePacker.prototype = {
 			entry.width = opts.width;
 			entry.height = opts.height;
 		}else
-		if( src instanceof HTMLImageElement ){
-			entry.width = src.naturalWidth;
-			entry.height = src.naturalHeight;
+		if( source instanceof HTMLImageElement ){
+			entry.width = source.naturalWidth;
+			entry.height = source.naturalHeight;
 		}else
-		if( src instanceof HTMLCanvasElement ){
-			entry.width = src.width;
-			entry.height = src.height;
+		if( source instanceof HTMLCanvasElement ){
+			entry.width = source.width;
+			entry.height = source.height;
 		}
 
 	},
 
-	remove: function( src ){
+	remove: function( source ){
 		for( var i = 0; i<this._sources.length; i++ ){
-			if( this._sources[i].src === src ){
+			if( this._sources[i].source === source ){
 				this._sources.splice(i,1);
 				break;
 			}
@@ -72,10 +74,6 @@ TexturePacker.prototype = {
 
 		if( this.needsPack ){
 			this.needsPack = false;
-
-			if( !this.texture ){
-				this.texture = document.createElement( 'canvas' );
-			}
 
 			var result;
 			var opts = this._opts;
@@ -90,21 +88,50 @@ TexturePacker.prototype = {
 
 			if( this._opts.pack === 'bin' ){
 				result = pack( input, { inPlace: true } );
+			}else
+			if( this._opts.pack === 'grid' ){
+				// TODO
 			}
 
-			this.texture.width =  result.width;
-			this.texture.height = result.height;
+			this.canvas.width =  result.width;
+			this.canvas.height = result.height;
 
-			var ctx = this.texture.getContext('2d');
+			var ctx = this.canvas.getContext('2d');
 			ctx.clearRect( 0,0,result.width,result.height );
 
 			var entry;
 
 			for( var i = 0; i<this._sources.length; i++ ){
+
 				entry = this._sources[i];
-				ctx.drawImage(entry.src,entry.packed.x,entry.packed.y);
+
+				// adjust packed values to account for spacing.
+				entry.packed.x += opts.spacing;
+				entry.packed.y += opts.spacing;
+				entry.packed.width -= opts.spacing * 2;
+				entry.packed.height -= opts.spacing * 2;
+
+				ctx.drawImage(entry.source,entry.packed.x,entry.packed.y);
+
+				// TODO : generate uvs
+				//entry.packed.u = entry.packed.x / result.width;
+				//entry.packed.v = entry.packed.y / result.height;
+
 			}
 			
+		}
+
+	},
+
+	forEach: function( each ){
+
+		var entry;
+		for( var i = 0; i<this._sources.length; i++ ){
+
+			entry = this._sources[i];
+			if( each ){
+				each( entry.source, entry.data, entry.packed );
+			}
 		}
 
 	}
